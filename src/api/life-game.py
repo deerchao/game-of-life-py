@@ -22,6 +22,12 @@ class LifeGame:
             print()
         print(f"--------------------^{self.generation}^----------------------")
 
+    def updateBoard(self, r, c, color):
+        if 0 <= r < self.rowCount and \
+           0 <= c < self.columnCount and \
+           0 < color < 0xffffff:
+            self.board[r][c] = color
+
     def tick(self):
         for r in range(0, self.rowCount):
             for c in range(0, self.columnCount):
