@@ -4,7 +4,7 @@ import copy
 class LifeGame:
     """Conway's Life Game"""
 
-    # 0xRRGGBB, 0 for dead
+    # In the game board we record colors of cells as intgers(0xRRGGBB), 0 means dead.
     def __init__(self, board):
         # board for current state, nextBoard for use when ticking
         # They got switched in every tick
@@ -12,12 +12,15 @@ class LifeGame:
         self.nextBoard = copy.deepcopy(board)
         self.rowCount = len(board)
         self.columnCount = len(board[0])
+        # increased after every tick
+        self.generation = 0
 
     def print(self):
         for row in self.board:
             for cell in row:
                 print(f"{cell:6x}", end=' ')
             print()
+        print(f"--------------------^{self.generation}^----------------------")
 
     def tick(self):
         for r in range(0, self.rowCount):
@@ -45,6 +48,7 @@ class LifeGame:
                 self.nextBoard[r][c] = nextStatus
         
         self.board, self.nextBoard = self.nextBoard, self.board
+        self.generation += 1
 
     def countAliveNeighbors(self, r, c):
         neighbors = self.getNeighbors(r, c)
@@ -100,7 +104,6 @@ class LifeGame:
 
 
 if __name__ == '__main__':
-    # 0xRRGGBB, 0 for dead
     board = [
         [0xff0000, 0xff00, 0xff, 0, 0, 0, 0, 0, 0, 0],
         [0xff00, 0, 0, 0, 0, 0, 0, 0, 0, 0],
