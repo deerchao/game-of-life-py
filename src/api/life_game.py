@@ -1,5 +1,6 @@
 import copy
-
+import rgb_color
+from py_linq import Enumerable
 
 class LifeGame:
     """Conway's Life Game"""
@@ -59,39 +60,13 @@ class LifeGame:
     def countAliveNeighbors(self, r, c):
         neighbors = self.getNeighbors(r, c)
 
-        count = 0
-
-        for neighbor in neighbors:
-            row, col = neighbor
-            count += 1 if self.board[row][col] != 0 else 0
-
-        return count
-
+        return Enumerable(neighbors).count(lambda x: self.board[x[0]][x[1]] != 0)
+ 
     def getAverageNeighborColor(self, r, c):
-        neighbors = self.getNeighbors(r, c)
+        neighbors = Enumerable(self.getNeighbors(r, c))
 
-        red = 0
-        green = 0
-        blue = 0
-        count = 0
-        
-        for neighbor in neighbors:
-            row, col = neighbor
-            state = self.board[row][col]
-            red += (state & 0xff0000) >> 16
-            green += (state & 0xff00) >> 8
-            blue += state & 0xff
-            count += 1 if state != 0 else 0
-
-        if count == 0:
-            return 0
-        
-        red /= count
-        green /= count
-        blue /= count
-
-        average = (int(red) << 16) + (int(green) << 8) + int(blue)
-        return average
+        colors = neighbors.select(lambda x: self.board[x[0]][x[1]])
+        return rgb_color.average(colors)
       
     def getNeighbors(self, r, c):
          # p for previous
