@@ -2,19 +2,28 @@ import copy
 import rgb_color
 from py_linq import Enumerable
 
+
 class LifeGame:
     """Conway's Life Game"""
 
     # In the game board we record colors of cells as intgers(0xRRGGBB), 0 means dead.
     def __init__(self, board):
+        # initialState and mutations define all the states through history
+        self.initialState = board
+        # [(generation, row, column, color),...]
+        self.mutations = []
+
         # board for current state, nextBoard for use when ticking
         # They got switched in every tick
-        self.board = board
+        self.board = copy.deepcopy(board)
         self.nextBoard = copy.deepcopy(board)
         self.rowCount = len(board)
         self.columnCount = len(board[0])
+
         # increased after every tick
         self.generation = 0
+        # increased after every input
+        self.version = 0
 
     def print(self):
         for row in self.board:
@@ -23,16 +32,18 @@ class LifeGame:
             print()
         print(f"--------------------^{self.generation}^----------------------")
 
-    def updateBoard(self, r, c, color):
+    def update_cell(self, r, c, color):
         if 0 <= r < self.rowCount and \
            0 <= c < self.columnCount and \
            0 < color < 0xffffff:
             self.board[r][c] = color
+            self.mutations.append((self.generation, r, c, color))
+            self.version += 1
 
     def tick(self):
         for r in range(0, self.rowCount):
             for c in range(0, self.columnCount):
-                liveNeighbors = self.countAliveNeighbors(r, c)
+                liveNeighbors = self.count_alive_neighbors(r, c)
 
                 nextStatus = self.board[r][c]
 
@@ -50,26 +61,26 @@ class LifeGame:
                     if liveNeighbors == 3:
                         # rule 4: Any dead cell with exactly three live neighbors becomes a live cell
                         # When a dead cell revives by rule #4 it will be given a color that is the average of its neighbors (that revive it)
-                        nextStatus = self.getAverageNeighborColor(r, c)
-                
+                        nextStatus = self.get_average_neighbor_color(r, c)
+
                 self.nextBoard[r][c] = nextStatus
-        
+
         self.board, self.nextBoard = self.nextBoard, self.board
         self.generation += 1
 
-    def countAliveNeighbors(self, r, c):
-        neighbors = self.getNeighbors(r, c)
+    def count_alive_neighbors(self, r, c):
+        neighbors = self.get_neighbors(r, c)
 
         return Enumerable(neighbors).count(lambda x: self.board[x[0]][x[1]] != 0)
- 
-    def getAverageNeighborColor(self, r, c):
-        neighbors = Enumerable(self.getNeighbors(r, c))
+
+    def get_average_neighbor_color(self, r, c):
+        neighbors = Enumerable(self.get_neighbors(r, c))
 
         colors = neighbors.select(lambda x: self.board[x[0]][x[1]])
         return rgb_color.average(colors)
-      
-    def getNeighbors(self, r, c):
-         # p for previous
+
+    def get_neighbors(self, r, c):
+        # p for previous
         pr = r-1 if r > 0 else self.rowCount-1
         pc = c-1 if c > 0 else self.columnCount-1
 
@@ -101,4 +112,3 @@ if __name__ == '__main__':
         game.print()
         print()
         game.tick()
-
