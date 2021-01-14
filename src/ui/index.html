@@ -62,9 +62,11 @@
         });
 
         const colorStorageKey = 'game-of-life.player-color';
-        let color = parseInt(localStorage.getItem(colorStorageKey)) || 0;
+        const color = parseInt(localStorage.getItem(colorStorageKey)) || 0;
+        const host = location.hostname || '127.0.0.1';
+        const port = 5678;
 
-        const ws = new WebSocket("ws://127.0.0.1:5678/gameoflife?color=" + color);
+        const ws = new WebSocket(`ws://${host}:${port}/gameoflife?color=${color}`);
         ws.onmessage = onSocketMessage;
 
         function onSocketMessage(event) {
