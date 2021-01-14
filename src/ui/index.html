@@ -63,10 +63,17 @@
 
         const colorStorageKey = 'game-of-life.player-color';
         const color = parseInt(localStorage.getItem(colorStorageKey)) || 0;
-        const host = location.hostname || '127.0.0.1';
-        const port = 5678;
 
-        const ws = new WebSocket(`ws://${host}:${port}/gameoflife?color=${color}`);
+        let host = location.host;
+        let protocol = 'wss';
+        if (!host) {
+            // In local dev environment, this page is directly from file system, so there's no host
+            host = '127.0.0.1:5678';
+            protocol = 'ws';
+        }
+        const url = `${protocol}://${host}/ws/gameoflife?color=${color}`;
+
+        const ws = new WebSocket(url);
         ws.onmessage = onSocketMessage;
 
         function onSocketMessage(event) {
