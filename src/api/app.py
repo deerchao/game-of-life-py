@@ -36,7 +36,7 @@ def state_sync_message():
 
 
 def user_init_message(color):
-    return json.dumps({"type": "init", "color": color})
+    return json.dumps({"type": "init", "color": color, "board": game.board, "generation": game.generation, "version": game.version})
 
 
 async def handle_user(websocket, path):
@@ -46,7 +46,7 @@ async def handle_user(websocket, path):
     except:
         color = 0
 
-    await register_user(websocket, color)
+    color = await register_user(websocket, color)
 
     try:
         async for message in websocket:
@@ -71,6 +71,7 @@ async def register_user(websocket, color):
 
     users[websocket] = color
     print(f"user connected {websocket} {color}")
+    return color
 
 
 def unregister_user(websocket):
@@ -82,6 +83,7 @@ async def notify_users(message):
     sockets = users.keys()
     if len(sockets) > 0:
         await asyncio.gather(*[socket.send(message) for socket in sockets])
+
 
 async def main():
     start_server = websockets.serve(handle_user, bind_ip, bind_port)

@@ -77,7 +77,7 @@ class LifeGame:
     def get_average_neighbor_color(self, r, c):
         neighbors = Enumerable(self.get_neighbors(r, c))
 
-        colors = neighbors.select(lambda x: self.board[x[0]][x[1]])
+        colors = neighbors.select(lambda x: self.board[x[0]][x[1]]).where(lambda x: x != 0).to_list()
         return rgb_color.average(colors)
 
     def get_neighbors(self, r, c):

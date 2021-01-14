@@ -4,15 +4,90 @@
 <head>
     <title>Game of Life</title>
     <meta charset="utf-8" />
+
+    <style>
+        td {
+            height: 10px;
+            width: 10px;
+        }
+    </style>
 </head>
 
 <body>
-    <script>
-        new WebSocket("ws://127.0.0.1:5678").onmessage = onSocketMessage;
+    <div class="container">
+        <div id="app"></div>
+    </div>
 
-		function onSocketMessage(event) {
-            const message = event.data;
-            console.log(message);
+    <template id="game-template">
+        <div class="game">
+            <table class="board">
+                <tbody>
+                    <tr v-for="(row, rowIndex) in board" :key="rowIndex">
+                        <td v-for="(cell, columnIndex) in row" :key="columnIndex" :style="{'background-color': cell}"
+                            @click="rise(rowIndex, columnIndex)">
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+            <div>Generation: {{generation}} Version: {{version}}</div>
+        </div>
+    </template>
+
+    <script src="https://cdn.jsdelivr.net/npm/vue"></script>
+    <script>window.Vue || document.write('<script src="vue-2.6.12.min.js">\x3C/script>')</script>
+    <script>
+        const template = document.getElementById('game-template').innerHTML;
+        const vm = new Vue({
+            el: '#app',
+            template: template,
+            data: {
+                color: 'transparent',
+                generation: 0,
+                version: 0,
+                board: [],
+            },
+            methods: {
+                initialize(color) {
+                    this.color = color;
+                },
+                synchorize(board, generation, version) {
+                    this.generation = generation;
+                    this.version = version;
+                    this.board = board.map(row => row.map(cell => colorFromInt(cell)));
+                },
+                rise(rowIndex, columnIndex) {
+                    ws.send(JSON.stringify({ action: 'update-cell', row: rowIndex, column: columnIndex }));
+                }
+            }
+        });
+
+        const colorStorageKey = 'game-of-life.player-color';
+        let color = parseInt(localStorage.getItem(colorStorageKey)) || 0;
+
+        const ws = new WebSocket("ws://127.0.0.1:5678/gameoflife?color=" + color);
+        ws.onmessage = onSocketMessage;
+
+        function onSocketMessage(event) {
+            const message = JSON.parse(event.data);
+            switch (message.type) {
+                case 'init':
+                    localStorage.setItem(colorStorageKey, message.color);
+                    vm.initialize(colorFromInt(message.color));
+                    vm.synchorize(message.board, message.generation, message.version);
+                    break;
+                case 'sync':
+                    vm.synchorize(message.board, message.generation, message.version);
+                    break;
+                default:
+                    console.log('unkown message type', message);
+                    break;
+            }
+        }
+
+        function colorFromInt(value) {
+            if (!value)
+                return '#000000';
+            return '#' + value.toString(16);
         }
     </script>
 </body>
