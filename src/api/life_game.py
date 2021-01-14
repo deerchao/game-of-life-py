@@ -40,6 +40,7 @@ class LifeGame:
             self.mutations.append((self.generation, r, c, color))
             self.version += 1
 
+    # todo make this 1000+ times faster
     def tick(self):
         for r in range(0, self.rowCount):
             for c in range(0, self.columnCount):

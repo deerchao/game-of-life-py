@@ -7,8 +7,8 @@ from life_game import LifeGame
 import rgb_color
 
 
-worldWidth = 500
-worldHeight = 500
+worldWidth = 50
+worldHeight = 50
 interval = 3
 bind_ip = "127.0.0.1"
 bind_port = 5678
@@ -23,6 +23,7 @@ async def run_game(game, interval):
     while True:
         await asyncio.sleep(interval)
         game.tick()
+        await notify_users(state_sync_message())
 
 
 def generate_color():
@@ -31,7 +32,7 @@ def generate_color():
 
 
 def state_sync_message():
-    return json.dumps({"type": "sync", "board": game.board, "generation": game.generation})
+    return json.dumps({"type": "sync", "board": game.board, "generation": game.generation, "version": game.version})
 
 
 def user_init_message(color):
@@ -45,44 +46,52 @@ async def handle_user(websocket, path):
     except:
         color = 0
 
+    await register_user(websocket, color)
+
+    try:
+        async for message in websocket:
+            data = json.loads(message)
+
+            if data['action'] == "update-cell":
+                r = data["row"]
+                c = data["column"]
+                game.update_cell(r, c, color)
+                await notify_users(state_sync_message())
+    except Exception as e:
+        logging.error(e)
+    finally:
+        unregister_user(websocket)
+        return
+
+
+async def register_user(websocket, color):
     if color == 0:
         color = generate_color()
         await websocket.send(user_init_message(color))
 
     users[websocket] = color
+    print(f"user connected {websocket} {color}")
 
-    while True:
-        try:
-            async for message in websocket:
-                data = json.loads(message)
 
-                if data['action'] == "update-cell":
-                    r = data["row"]
-                    c = data["column"]
-                    game.update_cell(r, c, color)
-                    await notify_users(state_sync_message())
-        except Exception as e:
-            logging.error(e)
-        finally:
-            users.pop(websocket)
-            return
+def unregister_user(websocket):
+    users.pop(websocket)
+    print(f"user disconnected {websocket}")
 
 
 async def notify_users(message):
     sockets = users.keys()
     if len(sockets) > 0:
-        await asyncio.wait([socket.send(message) for socket in sockets])
+        await asyncio.gather(*[socket.send(message) for socket in sockets])
+
+async def main():
+    start_server = websockets.serve(handle_user, bind_ip, bind_port)
+    ticking = asyncio.create_task(run_game(game, interval))
+    await asyncio.gather(ticking, start_server)
 
 
 logging.basicConfig()
-
 # [websocket: color]
 users = {}
 game = create_game(worldWidth, worldHeight)
 
-start_server = websockets.serve(handle_user, bind_ip, bind_port)
-
-loop = asyncio.get_event_loop()
-loop.run_until_complete(start_server)
-loop.create_task(run_game(game, interval))
-loop.run_forever()
+asyncio.run(main())

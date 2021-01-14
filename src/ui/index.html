@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Game of Life</title>
+    <meta charset="utf-8" />
+</head>
+
+<body>
+    <script>
+        new WebSocket("ws://127.0.0.1:5678").onmessage = onSocketMessage;
+
+		function onSocketMessage(event) {
+            const message = event.data;
+            console.log(message);
+        }
+    </script>
+</body>
+
+</html>
