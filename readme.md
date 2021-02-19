@@ -14,7 +14,6 @@ In order to run, you should first start the server:
 
 If there is a problem, check if these packages are installed:
 
-    pip install py-linq
     pip install websockets
 
 Then open `src/ui/index.html` in your browser. Note that random color are generated for browsers at first connection to the backend, and then saved to localStorage. So if you want to replace your color, you can clear local storages and refresh the page.
