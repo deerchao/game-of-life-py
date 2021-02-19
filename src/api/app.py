@@ -14,29 +14,18 @@ bind_ip = "127.0.0.1"
 bind_port = 5678
 
 
-def create_game(width, height):
-    board = [[0] * width for _ in range(0, height)]
-    return LifeGame(board)
+
+async def main():
+    serving = websockets.serve(handle_user, bind_ip, bind_port)
+    ticking = asyncio.create_task(run_game(interval))
+    await asyncio.gather(ticking, serving)
 
 
-async def run_game(game, interval):
+async def run_game(interval):
     while True:
         await asyncio.sleep(interval)
         game.tick()
         await notify_users(state_sync_message())
-
-
-def generate_color():
-    # exclude colors too close to black(0, means dead) so we can observe more easily
-    return rgb_color.random(0x333333)
-
-
-def state_sync_message():
-    return json.dumps({"type": "sync", "board": game.board, "generation": game.generation, "version": game.version})
-
-
-def user_init_message(color):
-    return json.dumps({"type": "init", "color": color, "board": game.board, "generation": game.generation, "version": game.version})
 
 
 async def handle_user(websocket, path):
@@ -61,7 +50,6 @@ async def handle_user(websocket, path):
         logging.error(e)
     finally:
         unregister_user(websocket)
-        return
 
 
 async def register_user(websocket, color):
@@ -85,15 +73,25 @@ async def notify_users(message):
         await asyncio.gather(*[socket.send(message) for socket in sockets])
 
 
-async def main():
-    start_server = websockets.serve(handle_user, bind_ip, bind_port)
-    ticking = asyncio.create_task(run_game(game, interval))
-    await asyncio.gather(ticking, start_server)
+def generate_color():
+    # exclude colors too close to black(0, means dead) so we can observe more easily
+    return rgb_color.random(0x333333)
 
+
+def state_sync_message():
+    return json.dumps({"type": "sync", "board": game.board, "generation": game.generation, "version": game.version})
+
+
+def user_init_message(color):
+    return json.dumps({"type": "init", "color": color, "board": game.board, "generation": game.generation, "version": game.version})
+
+
+def create_game(width, height):
+    board = [[0] * width for _ in range(0, height)]
+    return LifeGame(board)
 
 logging.basicConfig()
-# [websocket: color]
-users = {}
+users = {}  # {websocket: color}
 game = create_game(worldWidth, worldHeight)
 
 asyncio.run(main())
