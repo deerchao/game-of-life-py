@@ -1,0 +1,13 @@
+version: '3.3'
+
+services: 
+  api:
+    image: deerchao/game-of-life-py-api
+    ports:
+      - 5678:5678
+  ui:
+    image: deerchao/game-of-life-py-ui
+    ports:
+      - 8080:80
+    depends_on: 
+      - api

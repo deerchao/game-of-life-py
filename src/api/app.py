@@ -10,7 +10,7 @@ import rgb_color
 worldWidth = 50
 worldHeight = 50
 interval = 3
-bind_ip = "127.0.0.1"
+bind_ip = "0.0.0.0"
 bind_port = 5678
 
 

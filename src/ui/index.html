@@ -70,12 +70,14 @@
 
         let host = location.host;
         let protocol = 'wss';
-        if (!host) {
-            // In local dev environment, this page is directly from file system, so there's no host
+        if (!host || host.startsWith('localhost:') || host.startsWith('127.0.0.1:')) {
+            // When open in local dev environment, connect to api through fixed url.
+            // This page might be open from file system directly, so there's no host,
+            // Or it could be served without api proxying
             host = '127.0.0.1:5678';
             protocol = 'ws';
         }
-        const url = `${protocol}://${host}/ws/gameoflife?color=${color}`;
+        const url = `${protocol}://${host}/ws/gameoflifepy?color=${color}`;
 
         const ws = new WebSocket(url);
         ws.onmessage = onSocketMessage;
